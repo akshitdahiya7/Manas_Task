@@ -1,0 +1,60 @@
+# Brings up the full stack: Postgres, the FastAPI backend and the React
+# frontend behind nginx.
+#
+#   docker compose up --build
+#   frontend  -> http://localhost:3000
+#   API docs  -> http://localhost:8000/docs
+#
+# Values come from .env when present (see .env.example). The defaults below
+# keep a fresh clone working with no setup - override them for anything real.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-manas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-manas}
+      POSTGRES_DB: ${POSTGRES_DB:-manas}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # The backend waits for this before starting, so it never races the DB.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-manas} -d ${POSTGRES_DB:-manas}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      # Overrides DATABASE_URL from .env, which points at SQLite for local runs.
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-manas}:${POSTGRES_PASSWORD:-manas}@db:5432/${POSTGRES_DB:-manas}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-480}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      VIEWER_USERNAME: ${VIEWER_USERNAME:-viewer}
+      VIEWER_PASSWORD: ${VIEWER_PASSWORD:-viewer123}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      MAX_BATCH_ROWS: ${MAX_BATCH_ROWS:-1000}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-5242880}
+    ports:
+      # Override with BACKEND_PORT if 8000 is taken on your machine.
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      # Override with FRONTEND_PORT if 3000 is taken on your machine.
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
