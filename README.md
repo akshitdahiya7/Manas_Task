@@ -249,6 +249,7 @@ runs on a fresh clone without one; anything set in `.env` overrides those defaul
 
 | Variable | Default | Notes |
 |---|---|---|
+| `FRONTEND_PORT` / `BACKEND_PORT` | `3000` / `8000` | Host ports — change if either is already in use |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `manas` | Database container credentials |
 | `DATABASE_URL` | `sqlite:///./manas.db` | Local runs only â€” compose overrides it with the Postgres URL |
 | `JWT_SECRET` | `dev-secret-change-me` | **Change this.** Startup logs a warning while it is the placeholder |
