@@ -1,5 +1,5 @@
-// One place for HTTP: attaches the token, and turns the backend's error
-// envelope into an ApiError so every page can render failures the same way.
+// All HTTP goes through here: attaches the token and turns the backend's
+// error envelope into an ApiError.
 
 const TOKEN_KEY = 'manas.token'
 const USER_KEY = 'manas.user'
@@ -12,8 +12,7 @@ export class ApiError extends Error {
     this.details = details || []
   }
 
-  // Validation errors arrive as [{field, message, type}]; group them by field
-  // so a form can show each message next to its input.
+  // Group validation errors by field so a form can show each one inline.
   get fieldErrors() {
     const map = {}
     for (const detail of this.details) {
@@ -60,7 +59,6 @@ async function request(path, { method = 'GET', body, isFormData = false } = {}) 
   }
 
   if (response.status === 401) {
-    // The token is gone or expired - drop it so the app returns to login.
     clearSession()
   }
 

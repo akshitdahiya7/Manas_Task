@@ -6,8 +6,6 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import settings
 
-# check_same_thread is a SQLite-only flag; harmless to compute here and keeps
-# local/test runs on SQLite working with FastAPI's threadpool.
 connect_args = {}
 if settings.database_url.startswith("sqlite"):
     connect_args["check_same_thread"] = False

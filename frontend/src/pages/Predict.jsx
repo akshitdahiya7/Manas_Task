@@ -4,8 +4,7 @@ import { FEATURES, FEATURE_ORDER, SAMPLE_RECORD } from '../features.js'
 import { ErrorBox, formatProbability, formatTime } from '../components/Feedback.jsx'
 
 export default function Predict() {
-  // Form values are kept as strings so a cleared input stays empty instead of
-  // silently becoming 0; they are converted just before submitting.
+  // Kept as strings so a cleared input stays empty rather than becoming 0.
   const [values, setValues] = useState(() => toStrings(SAMPLE_RECORD))
   const [versions, setVersions] = useState([])
   const [version, setVersion] = useState('')
@@ -31,8 +30,7 @@ export default function Predict() {
       const record = {}
       for (const name of FEATURE_ORDER) {
         const raw = (values[name] ?? '').trim()
-        // Send empty inputs as null so the backend reports the missing field
-        // rather than the browser coercing it to something valid-looking.
+        // null rather than "" so the backend reports the field as missing.
         record[name] = raw === '' ? null : Number(raw)
       }
       setResult(await api.predict(record, version || undefined))

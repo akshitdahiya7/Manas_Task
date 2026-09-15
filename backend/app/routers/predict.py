@@ -29,7 +29,7 @@ router = APIRouter(prefix="/api", tags=["inference"])
 
 
 def flatten_errors(exc: ValidationError) -> list[dict]:
-    """Turn pydantic's error list into something a UI can render per field."""
+    """Flatten pydantic errors to one entry per field."""
     return [
         {
             "field": ".".join(str(part) for part in err["loc"]) or "body",
@@ -52,14 +52,13 @@ def predict_single(
     record = payload.model_dump()
     digest = input_hash(record)
 
-    # Load outside the timer so latency measures inference, not disk IO.
+    # Outside the timer so latency measures inference, not disk IO.
     ensure_loaded(model_version)
 
     started = time.perf_counter()
     try:
         predicted_class, probability = predict(model_version, [record])[0]
     except Exception as exc:
-        # Record the failure before the exception handler turns it into a response.
         _log_failure(db, model_version, user, record, digest, exc)
         raise
     latency_ms = (time.perf_counter() - started) * 1000
@@ -94,7 +93,7 @@ def predict_single(
 
 
 def _log_failure(db, model_version, user, record, digest, exc) -> None:
-    """Persist a failed inference so errors are traceable too."""
+    """Log a failed inference before it becomes an error response."""
     db.rollback()
     db.add(
         InferenceLog(
@@ -144,8 +143,8 @@ def predict_csv(
 ):
     """Predict for every row of an uploaded CSV.
 
-    Rows are validated individually, so one bad row is reported in the response
-    instead of failing the whole upload.
+    Rows are validated individually: a bad row is reported in the response
+    rather than failing the whole upload.
     """
     raw = file.file.read()
     if len(raw) > settings.max_upload_bytes:
@@ -164,8 +163,7 @@ def predict_csv(
     if not reader.fieldnames:
         raise BadRequestError("Could not read a header row from the CSV")
 
-    # Exported data often still carries the label column; ignore it rather than
-    # rejecting the file for an unexpected column.
+    # Exported data often still carries the label column; ignore it.
     headers = [h.strip() for h in reader.fieldnames if h and h.strip() != TARGET_COLUMN]
     missing = [name for name in FEATURE_ORDER if name not in headers]
     if missing:
@@ -198,11 +196,10 @@ def predict_csv(
 
 
 def _clean_csv_row(raw_row: dict) -> tuple[dict | None, list[dict] | None]:
-    """Coerce one CSV row of strings into validated integers.
+    """Parse one CSV row of strings into validated integers.
 
-    CSV carries no types, so numeric strings are parsed here - but only as
-    exact integers. A value like 3.5 or abc in an integer column is an error,
-    not something to round.
+    Only exact integers are accepted: "30" is fine, "30.5" and "abc" are errors
+    rather than something to round.
     """
     parsed: dict = {}
     errors: list[dict] = []
@@ -244,7 +241,7 @@ def _clean_csv_row(raw_row: dict) -> tuple[dict | None, list[dict] | None]:
 
 
 def _run_batch(db, user, model_version: ModelVersion, rows, filename: str, source: str):
-    """Score the valid rows of a batch and persist the outcome of every row."""
+    """Score the valid rows and persist the outcome of every row."""
     valid = [(index, record) for index, record, errors in rows if errors is None]
 
     ensure_loaded(model_version)

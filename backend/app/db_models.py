@@ -1,10 +1,4 @@
-"""Database tables.
-
-Five tables cover everything the assignment asks to persist: who can act
-(users), what can serve traffic (model_versions), how the active model changed
-over time (promotion_events), what files were uploaded (upload_batches) and
-every individual inference (inference_logs).
-"""
+"""Database tables."""
 from datetime import datetime, timezone
 
 from sqlalchemy import (
@@ -44,8 +38,8 @@ class User(Base):
 class ModelVersion(Base):
     """One registered, servable model artifact.
 
-    Exactly one row is expected to be in STATUS_PRODUCTION at a time; the
-    promotion logic in routers/models.py maintains that invariant.
+    Exactly one row is in STATUS_PRODUCTION at a time; routers/models.py
+    maintains that invariant.
     """
 
     __tablename__ = "model_versions"
@@ -64,7 +58,7 @@ class ModelVersion(Base):
 
 
 class PromotionEvent(Base):
-    """Audit trail of every promotion / rollback, so deployments are traceable."""
+    """Audit trail of every promotion and rollback."""
 
     __tablename__ = "promotion_events"
 
@@ -99,11 +93,10 @@ class UploadBatch(Base):
 
 
 class InferenceLog(Base):
-    """One row per attempted prediction - successes and failures alike.
+    """One row per attempted prediction, successes and failures alike.
 
-    input_json echoes the validated payload and input_hash is a stable digest
-    of it, which together with model_version and preprocessing_version is
-    enough to reproduce any historical inference.
+    input_json, input_hash, model_version and preprocessing_version together
+    are enough to reproduce any historical inference.
     """
 
     __tablename__ = "inference_logs"

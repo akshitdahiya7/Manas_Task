@@ -55,7 +55,6 @@ def test_logs_endpoint_returns_recent_inferences(client, admin_headers, valid_re
     assert len(logs) <= 5
     assert logs[0]["requested_by"]
     assert logs[0]["model_version"]
-    # Newest first.
     assert logs == sorted(logs, key=lambda log: log["created_at"], reverse=True)
 
 

@@ -36,7 +36,7 @@ export default function Models({ user }) {
   async function act(action, version) {
     const what = action === 'promote' ? `promote ${version} to production` : 'roll back to the previous version'
     const reason = window.prompt(`Reason to ${what}?`, '')
-    // prompt returns null when cancelled - an empty string is a valid reason.
+    // null means cancelled; an empty string is a valid reason.
     if (reason === null) return
 
     setBusy(true)

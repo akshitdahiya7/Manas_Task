@@ -1,22 +1,20 @@
 FROM python:3.11-slim
 
-# Keras 3 runs the supplied MLP on its inference-only numpy backend, so the
-# image needs no TensorFlow. Set here so it applies to every process.
+# Keras runs the MLP on its numpy backend, so no TensorFlow is needed.
 ENV KERAS_BACKEND=numpy \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
 
-# curl is only needed for the container healthcheck.
+# curl is for the healthcheck below.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Requirements first so the (slow) dependency layer is cached across code edits.
+# Requirements first so the slow dependency layer stays cached.
 COPY requirements.txt requirements-dev.txt ./
-# Test deps are included so the suite can be run inside the container with
-#   docker compose exec backend pytest
+# Includes test deps so `docker compose exec backend pytest` works.
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
 COPY app/ ./app/
@@ -25,7 +23,6 @@ COPY scripts/ ./scripts/
 COPY tests/ ./tests/
 COPY pytest.ini ./
 
-# Run as a non-root user.
 RUN useradd --create-home --uid 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 

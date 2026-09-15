@@ -30,11 +30,10 @@ def test_promotion_switches_the_serving_model(client, admin_headers, valid_recor
     assert response.status_code == 200
     assert response.json()["status"] == STATUS_PRODUCTION
 
-    # Traffic now goes to the new version without the caller asking for it.
     prediction = client.post("/api/predict", json=valid_record, headers=admin_headers)
     assert prediction.json()["model_version"] == "v2-mlp"
 
-    # The invariant: exactly one production model.
+    # Exactly one production model.
     db.expire_all()
     in_production = db.query(ModelVersion).filter(ModelVersion.status == STATUS_PRODUCTION).all()
     assert len(in_production) == 1
@@ -84,7 +83,7 @@ def test_promoting_an_unknown_version_returns_404(client, admin_headers):
 
 
 def test_promotion_does_not_mutate_artifacts(client, admin_headers, db):
-    """Promotion changes status only - the files on disk are untouched."""
+    """Promotion changes status only; the files on disk are untouched."""
     before = {
         m.version: (m.artifact_path, m.scaler_path)
         for m in db.query(ModelVersion).all()
@@ -138,7 +137,6 @@ def test_login_with_wrong_password_fails(client):
         "/api/auth/login", json={"username": "admin", "password": "wrong-password"}
     )
     assert response.status_code == 401
-    # The message must not reveal whether the username exists.
     assert "Incorrect username or password" in response.json()["error"]["message"]
 
 

@@ -1,4 +1,4 @@
-"""Small helpers shared by the routers."""
+"""Helpers shared by the routers."""
 from sqlalchemy.orm import Session
 
 from app.db_models import STATUS_PRODUCTION, ModelVersion
@@ -6,7 +6,6 @@ from app.errors import NotFoundError
 
 
 def get_active_model(db: Session) -> ModelVersion:
-    """The version currently serving traffic."""
     model_version = (
         db.query(ModelVersion).filter(ModelVersion.status == STATUS_PRODUCTION).first()
     )
@@ -16,7 +15,7 @@ def get_active_model(db: Session) -> ModelVersion:
 
 
 def resolve_model(db: Session, version: str | None) -> ModelVersion:
-    """Pick the requested version, falling back to whichever is in production."""
+    """Return the requested version, or the active one if none was given."""
     if version is None:
         return get_active_model(db)
 

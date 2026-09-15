@@ -8,11 +8,11 @@ import History from './pages/History.jsx'
 import Models from './pages/Models.jsx'
 
 export default function App() {
-  // Session lives in localStorage; this state just mirrors it for rendering.
+  // Session lives in localStorage; this just mirrors it for rendering.
   const [user, setUser] = useState(getUser())
   const navigate = useNavigate()
 
-  // api.js clears the token on any 401, so re-check when the tab regains focus.
+  // api.js clears the token on a 401, so re-check when the tab regains focus.
   useEffect(() => {
     const sync = () => setUser(getUser())
     window.addEventListener('focus', sync)

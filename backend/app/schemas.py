@@ -1,9 +1,4 @@
-"""Request and response schemas.
-
-PatientFeatures is the contract for a single record. It forbids unknown fields
-and uses strict integer types, so bad data is rejected loudly (422) rather than
-silently coerced - a specific requirement of the assignment.
-"""
+"""Request and response schemas."""
 from datetime import datetime
 from typing import Annotated, Literal
 
@@ -13,7 +8,11 @@ Binary = Annotated[StrictInt, Field(ge=0, le=1)]
 
 
 class PatientFeatures(BaseModel):
-    """The 21 BRFSS health indicators, in the order the scaler expects."""
+    """The 21 BRFSS health indicators.
+
+    extra="forbid" plus StrictInt means unknown fields and wrong types are
+    rejected rather than silently coerced.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -47,7 +46,6 @@ class BatchRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """Everything needed to reproduce this inference later."""
 
     inference_id: int
     predicted_class: int

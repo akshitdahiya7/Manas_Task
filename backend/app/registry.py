@@ -2,16 +2,13 @@
 
 Artifacts are immutable files on disk; the database decides which one is
 active. Loaded objects are cached per version so a 21 MB forest is only read
-once per process, and a load failure surfaces as a 503 rather than a crash.
+once per process.
 """
 import logging
+import os
 import threading
 
-# Keras 3 can run a plain Dense network on its inference-only numpy backend,
-# so the image does not need TensorFlow. This must be set before keras is
-# imported anywhere, hence the assignment at module import time.
-import os
-
+# Must be set before keras is imported anywhere.
 os.environ.setdefault("KERAS_BACKEND", "numpy")
 
 import joblib  # noqa: E402
@@ -24,7 +21,6 @@ logger = logging.getLogger(__name__)
 FRAMEWORK_SKLEARN = "sklearn"
 FRAMEWORK_KERAS = "keras"
 
-# version string -> (model, scaler)
 _cache: dict[str, tuple[object, object]] = {}
 _lock = threading.Lock()
 
@@ -59,7 +55,6 @@ def load(model_version: ModelVersion) -> tuple[object, object]:
         return cached
 
     with _lock:
-        # Re-check: another thread may have populated it while we waited.
         cached = _cache.get(key)
         if cached is not None:
             return cached
@@ -72,7 +67,6 @@ def load(model_version: ModelVersion) -> tuple[object, object]:
 
 
 def clear_cache() -> None:
-    """Drop cached artifacts. Used by the tests."""
     with _lock:
         _cache.clear()
 

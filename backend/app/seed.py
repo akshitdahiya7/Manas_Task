@@ -1,7 +1,6 @@
 """Idempotent bootstrap of the registry and demo users.
 
-Runs on every startup. Existing rows are left alone so restarting the stack
-never resets which model is in production or undoes a promotion.
+Existing rows are left alone, so a restart never undoes a promotion.
 """
 import logging
 
@@ -19,8 +18,7 @@ from app.security import hash_password
 
 logger = logging.getLogger(__name__)
 
-# Metrics are the held-out test scores published on the model card; they are
-# what the "is the challenger better?" comparison starts from.
+# Held-out test scores from the model card.
 SEED_MODELS = [
     {
         "version": "v1-rf",
@@ -74,7 +72,7 @@ def seed_models(db: Session) -> None:
             notes=spec["notes"],
         )
         db.add(version)
-        db.flush()  # assign an id for the promotion event below
+        db.flush()  # need the id for the promotion event below
 
         if spec["status"] == STATUS_PRODUCTION:
             db.add(

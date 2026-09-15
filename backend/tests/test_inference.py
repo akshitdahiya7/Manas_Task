@@ -11,7 +11,6 @@ def test_single_prediction_returns_full_metadata(client, admin_headers, valid_re
     assert 0.0 <= body["probability"] <= 1.0
     assert body["model_version"] == "v1-rf"
     assert body["preprocessing_version"] == "v1"
-    # Enough metadata to reproduce the inference later.
     assert len(body["input_hash"]) == 64
     assert body["input"] == valid_record
     assert body["timestamp"]
@@ -20,7 +19,7 @@ def test_single_prediction_returns_full_metadata(client, admin_headers, valid_re
 
 
 def test_model_separates_high_and_low_risk(client, admin_headers, valid_record):
-    """A sanity check that features reach the model in the right order."""
+    """Sanity check that features reach the model in the right order."""
     high = client.post("/api/predict", json=valid_record, headers=admin_headers).json()
     low = client.post("/api/predict", json=LOW_RISK_RECORD, headers=admin_headers).json()
 
@@ -69,7 +68,7 @@ def test_csv_upload_scores_every_row(client, admin_headers, sample_csv_bytes):
 
 
 def test_csv_with_label_column_is_accepted(client, admin_headers, valid_record):
-    """Exported data often still carries Diabetes_binary; it should be ignored."""
+    """A Diabetes_binary column in the upload should be ignored, not rejected."""
     header = ",".join(valid_record) + ",Diabetes_binary\n"
     row = ",".join(str(v) for v in valid_record.values()) + ",1\n"
     response = client.post(
@@ -90,7 +89,7 @@ def test_explicit_version_overrides_the_active_model(client, admin_headers, vali
 
 
 def test_both_registered_frameworks_can_serve(client, admin_headers, valid_record):
-    """The sklearn and keras loaders must both work."""
+    """Both the sklearn and keras loaders must work."""
     for version in ("v1-rf", "v2-mlp"):
         response = client.post(
             f"/api/predict?version={version}", json=valid_record, headers=admin_headers

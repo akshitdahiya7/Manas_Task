@@ -1,11 +1,9 @@
-// Small shared pieces for the three states every page has to handle:
-// loading, error, and data.
+// Shared bits for the loading / error / data states.
 
 export function ErrorBox({ error }) {
   if (!error) return null
 
-  // Validation errors carry a per-field list; show it so the user knows what
-  // to fix rather than just "request failed".
+  // Show the per-field list so the user knows what to fix.
   const details = error.details || []
 
   return (

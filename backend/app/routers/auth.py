@@ -15,7 +15,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     """Exchange username and password for a bearer token."""
     user = db.query(User).filter(User.username == payload.username).first()
 
-    # Same message either way, so the response does not reveal which usernames exist.
+    # Same message either way, so we don't reveal which usernames exist.
     if user is None or not verify_password(payload.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

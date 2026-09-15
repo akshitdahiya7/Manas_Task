@@ -1,9 +1,7 @@
-"""Basic service monitoring, computed from the inference log.
+"""Basic service monitoring, aggregated from the inference log.
 
-Everything here is a plain aggregate over rows the API already writes, so
-monitoring needs no extra infrastructure. It is deliberately lightweight: a
-real deployment would export these to Prometheus rather than compute them per
-request.
+Deliberately lightweight - a real deployment would export these to Prometheus
+rather than compute them per request.
 """
 from datetime import timedelta
 
@@ -20,7 +18,7 @@ router = APIRouter(prefix="/api/metrics", tags=["monitoring"])
 
 
 def _percentile(values: list[float], fraction: float) -> float | None:
-    """Nearest-rank percentile. Good enough for a dashboard tile."""
+    """Nearest-rank percentile."""
     if not values:
         return None
     ordered = sorted(values)
@@ -88,11 +86,9 @@ def summary(db: Session = Depends(get_db), user: User = Depends(get_current_user
 def _drift(db: Session) -> dict:
     """Prediction-drift proxy.
 
-    Compares the positive rate over the most recent predictions against the
-    balanced 50/50 training baseline. This watches the model's *output*, not
-    its input features, so it flags a shift worth investigating rather than
-    proving one - a real drift monitor would compare feature distributions
-    against the training data too.
+    Compares the recent positive rate against the balanced 50/50 training
+    baseline. This watches the model's output, not its input features, so it
+    flags a shift worth investigating rather than proving one.
     """
     recent = [
         row[0]

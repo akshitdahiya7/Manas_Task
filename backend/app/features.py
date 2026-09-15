@@ -1,12 +1,8 @@
 """The 21 BRFSS input features.
 
-FEATURE_ORDER is the exact column order the saved StandardScaler was fitted
-on (verified against `scaler.feature_names_in_`). Every DataFrame we build for
-inference must use this order, so it lives in one place and is imported
-everywhere rather than re-typed.
-
-Ranges come from the BRFSS 2015 codebook and are enforced by the API so that
-out-of-domain values are rejected instead of being scaled into nonsense.
+FEATURE_ORDER is the column order the saved StandardScaler was fitted on
+(taken from scaler.feature_names_in_). Ranges come from the BRFSS 2015
+codebook.
 """
 
 FEATURE_ORDER = [
@@ -33,7 +29,6 @@ FEATURE_ORDER = [
     "Income",
 ]
 
-# Binary 0/1 indicators.
 BINARY_FEATURES = [
     "HighBP",
     "HighChol",
@@ -51,7 +46,7 @@ BINARY_FEATURES = [
     "Sex",
 ]
 
-# Features with a wider ordinal / continuous domain: (min, max, description).
+# name: (min, max, description)
 RANGED_FEATURES = {
     "BMI": (12, 98, "Body mass index"),
     "GenHlth": (1, 5, "General health, 1=excellent to 5=poor"),
@@ -64,13 +59,11 @@ RANGED_FEATURES = {
 
 TARGET_COLUMN = "Diabetes_binary"
 
-# Bumped whenever preprocessing changes; stored with every inference so an old
-# prediction can be reproduced exactly.
+# Bumped whenever preprocessing changes; stored with every inference.
 PREPROCESSING_VERSION = "v1"
 
 
 def feature_bounds(name: str) -> tuple[int, int]:
-    """Inclusive (min, max) for a feature."""
     if name in RANGED_FEATURES:
         low, high, _ = RANGED_FEATURES[name]
         return low, high

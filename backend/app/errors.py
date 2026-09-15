@@ -1,13 +1,7 @@
-"""Application exceptions.
-
-Each maps to one HTTP status via a handler in main.py, so a caller always gets
-a predictable JSON body instead of an unhandled 500.
-"""
+"""Application exceptions, each mapped to an HTTP status by a handler in main.py."""
 
 
 class AppError(Exception):
-    """Base class. `code` is a stable machine-readable string for clients."""
-
     status_code = 500
     code = "internal_error"
 
@@ -18,8 +12,6 @@ class AppError(Exception):
 
 
 class BadRequestError(AppError):
-    """Input we could not parse at all, e.g. a malformed CSV."""
-
     status_code = 400
     code = "bad_request"
 
@@ -30,8 +22,6 @@ class NotFoundError(AppError):
 
 
 class PayloadTooLargeError(AppError):
-    """Batch row count or upload size over the configured limit."""
-
     status_code = 413
     code = "payload_too_large"
 

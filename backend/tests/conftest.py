@@ -1,9 +1,6 @@
 """Shared pytest fixtures.
 
-The test database URL is set before any application module is imported, so the
-app builds its engine against a throwaway SQLite file instead of the real
-database. Tests run against the genuine model artifacts - they are committed to
-the repo, and exercising the real scaler and forest is the point.
+Tests run against a throwaway SQLite file and the real model artifacts.
 """
 import os
 import tempfile
@@ -13,8 +10,7 @@ import pytest
 
 TEST_DB = Path(tempfile.gettempdir()) / "manas_test.db"
 
-# Must happen before `from app...` anywhere: environment variables take
-# precedence over .env in pydantic-settings.
+# Must happen before importing app: env vars take precedence over .env.
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB.as_posix()}"
 os.environ["JWT_SECRET"] = "test-secret"
 os.environ["ADMIN_USERNAME"] = "admin"
@@ -75,11 +71,7 @@ LOW_RISK_RECORD = {
 
 @pytest.fixture(scope="session")
 def client():
-    """One app instance for the whole session.
-
-    The TestClient context manager triggers lifespan, which creates the schema
-    and seeds the registry and users.
-    """
+    """One app instance per session; the context manager runs startup."""
     if TEST_DB.exists():
         TEST_DB.unlink()
 
@@ -128,7 +120,7 @@ def sample_csv_bytes():
 
 @pytest.fixture(autouse=True)
 def _reset_production_model(client, admin_headers):
-    """Leave v1-rf in production after tests that promote a different version."""
+    """Put v1-rf back after tests that promote something else."""
     yield
     active = client.get("/api/models/active", headers=admin_headers)
     if active.status_code == 200 and active.json()["version"] != "v1-rf":

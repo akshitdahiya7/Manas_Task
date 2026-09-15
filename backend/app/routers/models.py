@@ -1,8 +1,7 @@
 """Model registry endpoints: listing versions, promotion and rollback.
 
-Promotion never overwrites an artifact. It only moves which registered row
-carries the `production` status, so the previous model stays on disk and a
-rollback is just another status change.
+Promotion never touches an artifact; it only moves which row carries the
+production status, so rollback is just another status change.
 """
 import logging
 
@@ -77,10 +76,10 @@ def _switch_production(
     action: str,
     reason: str | None,
 ) -> ModelVersion:
-    """Make `target` the production model in a single transaction.
+    """Make target the production model in a single transaction.
 
-    Demoting the incumbent and promoting the target happen together, so the
-    "exactly one production model" invariant always holds.
+    Demotion and promotion happen together so there is never a window with
+    zero or two production models.
     """
     previous_status = target.status
     incumbent = (
@@ -146,8 +145,7 @@ def rollback(
 ):
     """Return to the previously deployed version. Admin only.
 
-    The target is the model that was archived most recently, i.e. the one the
-    current production model displaced.
+    The target is whichever model was archived most recently.
     """
     last_archive = (
         db.query(PromotionEvent)

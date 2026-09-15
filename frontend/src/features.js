@@ -1,6 +1,5 @@
-// Mirrors backend/app/features.py so the form can render labels, ranges and a
-// valid default row. Kept in sync manually - the backend is still the
-// authority and will reject anything invalid.
+// Mirrors backend/app/features.py for labels and ranges. Kept in sync by
+// hand; the backend still validates everything.
 
 export const FEATURE_ORDER = [
   'HighBP', 'HighChol', 'CholCheck', 'BMI', 'Smoker', 'Stroke',
@@ -34,7 +33,7 @@ export const FEATURES = {
   Income: ['Income band', 1, 8, '1 = <$10k ... 8 = >$75k'],
 }
 
-// A valid record so a reviewer can submit the form in one click.
+// Pre-fills the form so it can be submitted in one click.
 export const SAMPLE_RECORD = {
   HighBP: 1, HighChol: 1, CholCheck: 1, BMI: 34, Smoker: 1, Stroke: 0,
   HeartDiseaseorAttack: 0, PhysActivity: 0, Fruits: 0, Veggies: 1,

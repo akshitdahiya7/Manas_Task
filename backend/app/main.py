@@ -1,9 +1,7 @@
 """FastAPI application entrypoint.
 
-Every expected failure is mapped to a handler below, so clients always receive
-the same JSON error envelope:
-
-    {"error": {"code": "...", "message": "...", "details": [...]}}
+Every failure is mapped to a handler below so clients always get the same
+envelope: {"error": {"code": ..., "message": ..., "details": [...]}}
 """
 import logging
 from contextlib import asynccontextmanager
@@ -41,9 +39,8 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
 
-    # Warm the active model so the first real request is not slowed by a
-    # cold artifact load. A failure here must not stop the service starting -
-    # /health stays up and the error surfaces as a 503 on first use.
+    # Warm the active model so the first request is not slowed by a cold load.
+    # A failure here must not stop startup; it surfaces as a 503 on first use.
     try:
         from app.predictor import ensure_loaded
         from app.services import get_active_model
@@ -78,9 +75,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# The frontend is served through nginx, which proxies /api to this service on
-# the same origin, so CORS is not needed there. This stays open for local
-# development, where Vite runs on a different port.
+# In Docker the frontend is same-origin behind nginx, so CORS is only needed
+# for local development where Vite runs on its own port.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -92,7 +88,6 @@ app.add_middleware(
 
 @app.exception_handler(AppError)
 async def handle_app_error(request: Request, exc: AppError):
-    """Our own exceptions carry their status code and machine-readable code."""
     if exc.status_code >= 500:
         logger.error("%s on %s: %s", exc.code, request.url.path, exc.message)
     return JSONResponse(
@@ -120,11 +115,10 @@ async def handle_validation_error(request: Request, exc: RequestValidationError)
 
 @app.exception_handler(StarletteHTTPException)
 async def handle_http_exception(request: Request, exc: StarletteHTTPException):
-    """Keep framework errors in the same envelope.
+    """Wrap framework errors in the same envelope.
 
-    Registered against Starlette's base class, not FastAPI's subclass, so that
-    routing 404s and 405s are wrapped too - FastAPI raises those from Starlette
-    directly and they would otherwise return a bare {"detail": ...}.
+    Registered on Starlette's base class rather than FastAPI's subclass so
+    routing 404s and 405s are covered too.
     """
     codes = {401: "unauthorized", 403: "forbidden", 404: "not_found", 405: "method_not_allowed"}
     return JSONResponse(
@@ -136,11 +130,7 @@ async def handle_http_exception(request: Request, exc: StarletteHTTPException):
 
 @app.exception_handler(Exception)
 async def handle_unexpected_error(request: Request, exc: Exception):
-    """Last line of defence.
-
-    Anything we failed to anticipate is logged with its traceback and returned
-    as a clean 500 - the client never sees a stack trace.
-    """
+    """Anything unanticipated: logged with a traceback, returned as a clean 500."""
     logger.exception("Unhandled error on %s", request.url.path)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -157,7 +147,7 @@ app.include_router(metrics.router)
 
 @app.get("/health", tags=["health"])
 def health():
-    """Liveness plus a database round-trip, for the container healthcheck."""
+    """Liveness plus a database round-trip, used by the container healthcheck."""
     try:
         db = SessionLocal()
         try:

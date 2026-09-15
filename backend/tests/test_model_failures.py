@@ -7,14 +7,14 @@ from app.db_models import InferenceLog, ModelVersion
 
 @pytest.fixture(autouse=True)
 def _clear_registry_cache():
-    """Each test here manipulates artifacts, so start and end from a cold cache."""
+    """These tests swap artifacts, so start and end from a cold cache."""
     registry.clear_cache()
     yield
     registry.clear_cache()
 
 
 def test_corrupt_artifact_returns_503(client, admin_headers, valid_record, db, tmp_path):
-    """A corrupt model file is a service problem, not an unhandled crash."""
+    """A corrupt model file is a 503, not a crash."""
     corrupt = tmp_path / "corrupt.joblib"
     corrupt.write_bytes(b"this is not a joblib file")
 
@@ -64,12 +64,12 @@ def test_missing_scaler_returns_503(client, admin_headers, valid_record, db):
 def test_inference_exception_returns_503_and_is_logged(
     client, admin_headers, valid_record, db, monkeypatch
 ):
-    """Simulate the model itself blowing up mid-prediction."""
+    """Simulate the model failing mid-prediction."""
 
     def explode(*args, **kwargs):
         raise RuntimeError("simulated model failure")
 
-    # Warm the cache, then sabotage the loaded estimator.
+    # Warm the cache, then break the loaded estimator.
     client.post("/api/predict", json=valid_record, headers=admin_headers)
     model, _ = registry._cache["v1-rf"]
     monkeypatch.setattr(model, "predict_proba", explode)
@@ -79,7 +79,6 @@ def test_inference_exception_returns_503_and_is_logged(
 
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "inference_failed"
-    # No stack trace leaks to the caller.
     assert "Traceback" not in response.text
 
     db.expire_all()
@@ -88,7 +87,7 @@ def test_inference_exception_returns_503_and_is_logged(
 
 
 def test_wrong_prediction_count_is_caught(client, admin_headers, valid_record, monkeypatch):
-    """A model returning the wrong number of rows must not corrupt the response."""
+    """A model returning the wrong row count must not corrupt the response."""
     client.post("/api/predict", json=valid_record, headers=admin_headers)
     model, _ = registry._cache["v1-rf"]
 

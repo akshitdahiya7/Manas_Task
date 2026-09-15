@@ -1,8 +1,4 @@
-"""Input validation and error handling.
-
-Every case here asserts the exact status code and that the response is never an
-unhandled 500 - that is the specific robustness requirement.
-"""
+"""Input validation and error handling."""
 import pytest
 
 
@@ -17,7 +13,7 @@ def test_missing_required_field_names_the_field(client, admin_headers, valid_rec
 
 
 def test_unexpected_field_is_rejected(client, admin_headers, valid_record):
-    """extra="forbid" - unknown fields must not be silently ignored."""
+    """Unknown fields must not be silently ignored."""
     valid_record["SmokesCigars"] = 1
     response = client.post("/api/predict", json=valid_record, headers=admin_headers)
 
@@ -51,7 +47,7 @@ def test_out_of_range_values_are_rejected(client, admin_headers, valid_record, f
 
 @pytest.mark.parametrize("value", ["30", "abc", None, 30.5, True, [30]])
 def test_wrong_types_are_not_coerced(client, admin_headers, valid_record, value):
-    """No silent coercion: a numeric string or float must not become an int."""
+    """A numeric string or float must not be coerced into an int."""
     valid_record["BMI"] = value
     response = client.post("/api/predict", json=valid_record, headers=admin_headers)
 
@@ -62,7 +58,6 @@ def test_wrong_types_are_not_coerced(client, admin_headers, valid_record, value)
 def test_empty_body_is_rejected(client, admin_headers):
     response = client.post("/api/predict", json={}, headers=admin_headers)
     assert response.status_code == 422
-    # One error per missing feature.
     assert len(response.json()["error"]["details"]) == 21
 
 
@@ -83,7 +78,7 @@ def test_batch_over_row_limit_returns_413(client, admin_headers, valid_record, m
 
 
 def test_batch_with_one_invalid_record_is_rejected(client, admin_headers, valid_record):
-    """A JSON batch is schema-validated as a whole, so a bad record fails it."""
+    """A JSON batch is validated as a whole, so one bad record fails it."""
     bad = {**valid_record, "BMI": 999}
     response = client.post(
         "/api/predict/batch", json={"records": [valid_record, bad]}, headers=admin_headers
@@ -137,7 +132,7 @@ def test_non_utf8_file_returns_400(client, admin_headers):
 
 
 def test_csv_reports_bad_rows_without_failing_the_upload(client, admin_headers, valid_record):
-    """Partial failure: good rows are scored, bad rows are reported per row."""
+    """Good rows are scored; bad rows are reported individually."""
     columns = list(valid_record)
     header = ",".join(columns) + "\n"
     good = ",".join(str(valid_record[c]) for c in columns) + "\n"

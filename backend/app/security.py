@@ -1,4 +1,4 @@
-"""Password hashing, JWT issuing and the role-based access dependencies."""
+"""Password hashing, JWT issuing and role-based access dependencies."""
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -11,8 +11,7 @@ from app.config import settings
 from app.database import get_db
 from app.db_models import User
 
-# auto_error=False so a missing header yields our own 401 shape rather than
-# FastAPI's default body.
+# auto_error=False so a missing header returns our own error shape.
 bearer_scheme = HTTPBearer(auto_error=False)
 
 ROLE_ADMIN = "admin"
@@ -27,7 +26,7 @@ def verify_password(password: str, password_hash: str) -> bool:
     try:
         return bcrypt.checkpw(password.encode(), password_hash.encode())
     except ValueError:
-        # Malformed hash in the DB - treat as a failed login, never a 500.
+        # Malformed hash in the DB: a failed login, not a 500.
         return False
 
 
