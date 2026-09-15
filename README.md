@@ -1,4 +1,4 @@
-# MANAS — Diabetes Risk Inference Service
+# MANAS - Diabetes Risk Inference Service
 
 A production-style inference service for the BRFSS 2015 diabetes health indicators models: a
 FastAPI backend, a React frontend, and PostgreSQL for persistence, with model versioning, gated
@@ -11,8 +11,8 @@ Both supplied artifacts are served as two registered versions:
 | `v1-rf` | `diabetes_random_forest_tuned.joblib` | scikit-learn | **production** |
 | `v2-mlp` | `diabetes_mlp_tuned.keras` | Keras 3 | candidate |
 
-- **[REPORT.md](REPORT.md)** — how each part was approached, design decisions and tradeoffs.
-- **[DESIGN.md](DESIGN.md)** — the required answer on retraining after new labelled data arrives.
+- **[REPORT.md](REPORT.md)** - how each part was approached, design decisions and tradeoffs.
+- **[DESIGN.md](DESIGN.md)** - the required answer on retraining after new labelled data arrives.
 
 ---
 
@@ -31,8 +31,16 @@ Then open:
 | Health check | <http://localhost:8000/health> |
 
 The first build takes a few minutes (Python dependencies). The backend waits for Postgres to pass
-its healthcheck, creates its schema, and registers both model versions automatically — there is no
+its healthcheck, creates its schema, and registers both model versions automatically - there is no
 migration or seeding step to run.
+
+If port 3000 or 8000 is already in use on your machine, override it in `.env`:
+
+```bash
+FRONTEND_PORT=3001
+```
+
+and then browse to <http://localhost:3001> instead.
 
 ### Demo accounts
 
@@ -42,16 +50,16 @@ migration or seeding step to run.
 | `viewer` | `viewer123` | viewer | predict and read; promotion returns 403 |
 
 These defaults exist so a fresh clone runs with no setup. **Override them in `.env` for anything
-that is not local development** — see [Configuration](#configuration).
+that is not local development** - see [Configuration](#configuration).
 
 ### Try it in the UI
 
 1. Log in as `admin`.
-2. **Predict** — the form is pre-filled with a valid record; press *Predict*. Press *Try an invalid
+2. **Predict** - the form is pre-filled with a valid record; press *Predict*. Press *Try an invalid
    value* to see backend validation rendered inline.
-3. **Batch** — download the sample CSV from the link on the page and upload it.
-4. **History** — see the batch you just uploaded and drill into its rows.
-5. **Models & Dashboard** — monitoring tiles, promote `v2-mlp`, watch the active version change,
+3. **Batch** - download the sample CSV from the link on the page and upload it.
+4. **History** - see the batch you just uploaded and drill into its rows.
+5. **Models & Dashboard** - monitoring tiles, promote `v2-mlp`, watch the active version change,
    then roll back. Log in as `viewer` to confirm those buttons are gone.
 
 ---
@@ -86,8 +94,8 @@ All endpoints except `/health` and `/api/auth/login` require `Authorization: Bea
 
 | Method | Path | Role | Purpose |
 |---|---|---|---|
-| `GET` | `/health` | — | Liveness + database connectivity |
-| `POST` | `/api/auth/login` | — | Exchange credentials for a JWT |
+| `GET` | `/health` | - | Liveness + database connectivity |
+| `POST` | `/api/auth/login` | - | Exchange credentials for a JWT |
 | `GET` | `/api/auth/me` | any | Current user and role |
 | `POST` | `/api/predict` | any | Single record. `?version=` to pin a model |
 | `POST` | `/api/predict/batch` | any | JSON array of records |
@@ -204,7 +212,7 @@ curl -s -X POST http://localhost:8000/api/predict/csv \
   -F 'file=@backend/tests/data/sample_batch.csv'
 ```
 
-Returns the same `BatchResponse` shape. Rows are validated individually — a bad row is reported in
+Returns the same `BatchResponse` shape. Rows are validated individually - a bad row is reported in
 `results` with its errors while the good rows are still scored.
 
 ### Example: a validation error
@@ -249,9 +257,9 @@ runs on a fresh clone without one; anything set in `.env` overrides those defaul
 
 | Variable | Default | Notes |
 |---|---|---|
-| `FRONTEND_PORT` / `BACKEND_PORT` | `3000` / `8000` | Host ports � change if either is already in use |
+| `FRONTEND_PORT` / `BACKEND_PORT` | `3000` / `8000` | Host ports - change if either is already in use |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `manas` | Database container credentials |
-| `DATABASE_URL` | `sqlite:///./manas.db` | Local runs only — compose overrides it with the Postgres URL |
+| `DATABASE_URL` | `sqlite:///./manas.db` | Local runs only - compose overrides it with the Postgres URL |
 | `JWT_SECRET` | `dev-secret-change-me` | **Change this.** Startup logs a warning while it is the placeholder |
 | `JWT_EXPIRE_MINUTES` | `480` | Token lifetime |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | `admin` / `admin123` | Seeded on first start |
@@ -296,25 +304,25 @@ Vite proxies `/api` to `http://localhost:8000`, so the same relative paths work 
 ## Repository layout
 
 ```
-├── backend/
-│   ├── app/
-│   │   ├── main.py          # app wiring + the exception handlers
-│   │   ├── features.py      # the 21 features and their valid ranges
-│   │   ├── schemas.py       # strict request/response validation
-│   │   ├── registry.py      # artifact loading and caching
-│   │   ├── predictor.py     # preprocessing + prediction
-│   │   ├── db_models.py     # the five tables
-│   │   └── routers/         # auth, predict, models, logs, metrics
-│   ├── models/              # the committed model artifacts
-│   ├── scripts/             # sample-CSV generator
-│   ├── tests/               # pytest suite (72 tests)
-│   └── Dockerfile
-├── frontend/
-│   ├── src/pages/           # Login, Predict, Batch, History, Models
-│   ├── nginx.conf           # serves the build, proxies /api to the backend
-│   └── Dockerfile
-├── docker-compose.yml
-├── README.md   REPORT.md   DESIGN.md   .env.example
+|-- backend/
+|   |-- app/
+|   |   |-- main.py          # app wiring + the exception handlers
+|   |   |-- features.py      # the 21 features and their valid ranges
+|   |   |-- schemas.py       # strict request/response validation
+|   |   |-- registry.py      # artifact loading and caching
+|   |   |-- predictor.py     # preprocessing + prediction
+|   |   |-- db_models.py     # the five tables
+|   |   \-- routers/         # auth, predict, models, logs, metrics
+|   |-- models/              # the committed model artifacts
+|   |-- scripts/             # sample-CSV generator
+|   |-- tests/               # pytest suite (72 tests)
+|   \-- Dockerfile
+|-- frontend/
+|   |-- src/pages/           # Login, Predict, Batch, History, Models
+|   |-- nginx.conf           # serves the build, proxies /api to the backend
+|   \-- Dockerfile
+|-- docker-compose.yml
+|-- README.md   REPORT.md   DESIGN.md   .env.example
 ```
 
 Model artifacts are committed deliberately (21.5 MB total, under GitHub's limit) so that
